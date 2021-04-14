@@ -21,7 +21,7 @@ import shutil
 import glob
 import time
 import sys
-#from progressbar import progressbar
+from progressbar import progressbar
 
 # Fai partire il timer per cronometrare l'esecuzione del programma
 start_time = time.time()
@@ -89,8 +89,10 @@ contatoreFile = 0
 contatoreFileDoppi=0
 os.chdir(percorsoFilesInput)
 fileTotaliNellaCartella = glob.glob("*.*")
-# creo la progress bar   for i in progressbar(range(fileTotaliNellaCartella), redirect_stdout=True):
-for file in fileTotaliNellaCartella:
+# creo la progress bar
+for i in progressbar(range(len(fileTotaliNellaCartella)), redirect_stdout=True):
+#for file in fileTotaliNellaCartella:
+    file = fileTotaliNellaCartella[i]
     print()
     print('Esecuzione per file numero: ' + str(contatoreFile))
     print('File trovato: ' + file)
@@ -123,6 +125,7 @@ for file in fileTotaliNellaCartella:
         else:
             pathRisultato = shutil.copy2(percorsoFilesInput + file, pathMese + '\\File_' + dataModifica.strftime('%Y%m%d-%H%M%S') + '_' + str(contatoreFileDoppi) +  estensioneFile)
             print('File (doppio numero: ' + str(contatoreFileDoppi) + ') copiato in: ' + pathRisultato)
+            contatoreFileDoppi = contatoreFileDoppi + 1
     except shutil.Error as e:
         print('Shutil Error: %s' % e)
     except IOError as e:
