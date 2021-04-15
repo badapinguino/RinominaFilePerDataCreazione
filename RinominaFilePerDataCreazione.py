@@ -5,7 +5,10 @@ import shutil
 import glob
 import time
 import sys
+
+from PIL.Image import Image
 from progressbar import progressbar
+#from PIL import Images
 
 # Fai partire il timer per cronometrare l'esecuzione del programma
 start_time = time.time()
@@ -54,6 +57,36 @@ def modification_date(filename):
     t = os.path.getmtime(filename)
     return datetime.datetime.fromtimestamp(t)
 
+def get_date_image_taken(path):
+    return Image.open(path).getexif()[36867]
+
+# def salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensione, contatoreProfondita=0):
+#     if not os.path.exists(nomeFileOutput + estensione):
+#         if contatoreProfondita==0:
+#             pathRisultato = shutil.copy2(percorsoFilesInput + file, nomeFileOutput + estensione)
+#         else:
+#             pathRisultato = shutil.copy2(percorsoFilesInput + file, nomeFileOutput + "_" + str(contatoreProfondita) + estensione)
+#         #print('File copiato in: ' + pathRisultato)
+#         return pathRisultato
+#     else:
+#         contatoreProfondita = contatoreProfondita + 1
+#         #pathRisultato = shutil.copy2(percorsoFilesInput + file,
+#         #                             pathMese + '\\File_' + dataModifica.strftime('%Y%m%d-%H%M%S') + '_' + str(
+#         #                                 contatoreProfondita) + estensioneFile)
+#         salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensione, contatoreProfondita)
+#         #print('File (doppio numero: ' + str(contatoreProfondita) + ') copiato in: ' + pathRisultato)
+
+def salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensione, contatoreProfondita=0):
+
+    output_filename = nomeFileOutput + estensione
+    i = 1
+
+    while os.path.exists(output_filename):
+        output_filename = f'{nomeFileOutput}_{i}{estensione}'
+        i += 1
+
+    return shutil.copy2(percorsoFilesInput + file, output_filename)
+
 # Directory
 sottoCartella = "FileRinominati"
 
@@ -100,14 +133,9 @@ for i in progressbar(range(len(fileTotaliNellaCartella)), redirect_stdout=True):
     else:
         print("Directory ", pathMese, " già esistente")
     try:
-        nomeFileOutput = pathMese + '\\File_' + dataModifica.strftime('%Y%m%d-%H%M%S') + estensioneFile
-        if not os.path.exists(nomeFileOutput):
-            pathRisultato = shutil.copy2(percorsoFilesInput + file, nomeFileOutput)
-            print('File copiato in: ' + pathRisultato)
-        else:
-            pathRisultato = shutil.copy2(percorsoFilesInput + file, pathMese + '\\File_' + dataModifica.strftime('%Y%m%d-%H%M%S') + '_' + str(contatoreFileDoppi) +  estensioneFile)
-            print('File (doppio numero: ' + str(contatoreFileDoppi) + ') copiato in: ' + pathRisultato)
-            contatoreFileDoppi = contatoreFileDoppi + 1
+        nomeFileOutput = pathMese + '\\File_' + dataModifica.strftime('%Y%m%d-%H%M%S') #+ estensioneFile
+        pathRisultato = salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensioneFile, 0)
+        print('File copiato in: ' + pathRisultato)
     except shutil.Error as e:
         print('Shutil Error: %s' % e)
     except IOError as e:
