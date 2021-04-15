@@ -1,19 +1,3 @@
-# This is a sample Python script.
-
-# Press Maiusc+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-#def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-#    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-#if __name__ == '__main__':
-#    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
 import datetime
 import os
 import platform
@@ -36,11 +20,11 @@ if len(sys.argv)>1:
     # Print arguments one by one
     for arg in sys.argv:
         print('Argument: ', str(arg))
-    percorsoFilesInput = sys.argv[1] #.replace("\\", "\\\\")
+    percorsoFilesInput = sys.argv[1]
     if not percorsoFilesInput.endswith('\\'):
         percorsoFilesInput = percorsoFilesInput + "\\"
     if len(sys.argv)>2:
-        percorsoFilesOutput = sys.argv[2] #.replace("\\", "\\\\")
+        percorsoFilesOutput = sys.argv[2]
         if not percorsoFilesOutput.endswith('\\'):
             percorsoFilesOutput = percorsoFilesOutput + "\\"
     else:
@@ -48,8 +32,6 @@ if len(sys.argv)>1:
 
 print("PercorsoFilesInput: " + percorsoFilesInput)
 print("PercorsoFilesOutput: " + percorsoFilesOutput)
-#percorsoFilesInput = "C:\\Users\\danie\\Documents\\EsempioRinominaFilePython\\iPhone6s\\"
-#percorsoFilesOutput = "C:\\Users\\danie\\Documents\\EsempioRinominaFilePython\\iPhone6s\\"
 
 def creation_date(path_to_file):
     """
