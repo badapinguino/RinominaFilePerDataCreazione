@@ -6,9 +6,9 @@ import glob
 import time
 import sys
 
-from PIL.Image import Image
 from progressbar import progressbar
-#from PIL import Images
+import exifread
+from PIL import Image, UnidentifiedImageError
 
 # Fai partire il timer per cronometrare l'esecuzione del programma
 start_time = time.time()
@@ -19,14 +19,14 @@ print('Total number of arguments:', format(len(sys.argv)))
 print('Argument List:', str(sys.argv))
 percorsoFilesInput = ".\\"
 percorsoFilesOutput = ".\\"
-if len(sys.argv)>1:
+if len(sys.argv) > 1:
     # Print arguments one by one
     for arg in sys.argv:
         print('Argument: ', str(arg))
     percorsoFilesInput = sys.argv[1]
     if not percorsoFilesInput.endswith('\\'):
         percorsoFilesInput = percorsoFilesInput + "\\"
-    if len(sys.argv)>2:
+    if len(sys.argv) > 2:
         percorsoFilesOutput = sys.argv[2]
         if not percorsoFilesOutput.endswith('\\'):
             percorsoFilesOutput = percorsoFilesOutput + "\\"
@@ -35,6 +35,7 @@ if len(sys.argv)>1:
 
 print("PercorsoFilesInput: " + percorsoFilesInput)
 print("PercorsoFilesOutput: " + percorsoFilesOutput)
+
 
 def creation_date(path_to_file):
     """
@@ -53,31 +54,34 @@ def creation_date(path_to_file):
             # so we'll settle for when its content was last modified.
             return stat.st_mtime
 
+
 def modification_date(filename):
     t = os.path.getmtime(filename)
     return datetime.datetime.fromtimestamp(t)
 
-def get_date_image_taken(path):
-    return Image.open(path).getexif()[36867]
 
-# def salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensione, contatoreProfondita=0):
-#     if not os.path.exists(nomeFileOutput + estensione):
-#         if contatoreProfondita==0:
-#             pathRisultato = shutil.copy2(percorsoFilesInput + file, nomeFileOutput + estensione)
-#         else:
-#             pathRisultato = shutil.copy2(percorsoFilesInput + file, nomeFileOutput + "_" + str(contatoreProfondita) + estensione)
-#         #print('File copiato in: ' + pathRisultato)
-#         return pathRisultato
-#     else:
-#         contatoreProfondita = contatoreProfondita + 1
-#         #pathRisultato = shutil.copy2(percorsoFilesInput + file,
-#         #                             pathMese + '\\File_' + dataModifica.strftime('%Y%m%d-%H%M%S') + '_' + str(
-#         #                                 contatoreProfondita) + estensioneFile)
-#         salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensione, contatoreProfondita)
-#         #print('File (doppio numero: ' + str(contatoreProfondita) + ') copiato in: ' + pathRisultato)
+# def get_date_image_taken(path):
+#     return Image.open(path).getexif()[36867]
 
-def salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensione, contatoreProfondita=0):
+def read_img_exif_datetimeoriginal(path):
+    try:
+        im = Image.open(path)
+        # return get_date_taken(path)
+    except UnidentifiedImageError:
+        return None
+    tags = {}
+    dataOraOriginali = None
+    with open(path, 'rb') as f:
+        tags = exifread.process_file(f, details=False)
+        # tags = exifread.process_file(f, stop_tag='EXIF DateTimeOriginal')
+    if "EXIF DateTimeOriginal" in tags.keys():
+        dataOraOriginali = tags["EXIF DateTimeOriginal"]
+        # print("EXIF DateTimeOriginal: ", dataOraOriginali.values)
+        dataOraOriginali = datetime.datetime.strptime(dataOraOriginali.values, '%Y:%m:%d %H:%M:%S')
+    return dataOraOriginali
 
+
+def salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensione):
     output_filename = nomeFileOutput + estensione
     i = 1
 
@@ -86,6 +90,7 @@ def salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensione, contato
         i += 1
 
     return shutil.copy2(percorsoFilesInput + file, output_filename)
+
 
 # Directory
 sottoCartella = "FileRinominati"
@@ -101,21 +106,26 @@ else:
     print("Directory ", pathOut, " già esistente")
 
 contatoreFile = 0
-contatoreFileDoppi=0
+contatoreFileDoppi = 0
 os.chdir(percorsoFilesInput)
 fileTotaliNellaCartella = glob.glob("*.*")
 # creo la progress bar
 for i in progressbar(range(len(fileTotaliNellaCartella)), redirect_stdout=True):
-#for file in fileTotaliNellaCartella:
+    # for file in fileTotaliNellaCartella:
     file = fileTotaliNellaCartella[i]
     print()
     print('Esecuzione per file numero: ' + str(contatoreFile))
     print('File trovato: ' + file)
     estensioneFile = os.path.splitext(file)[1]
-    #print('Estensione file appena trovato: ', estensioneFile)
-    dataModifica = modification_date(percorsoFilesInput + file)
+    # print('Estensione file appena trovato: ', estensioneFile)
+    dataOriginaleFoto = read_img_exif_datetimeoriginal(percorsoFilesInput + file)
+    if dataOriginaleFoto is not None:
+        dataModifica = dataOriginaleFoto
+        print("Data da EXIF: " + str(dataModifica))
+    else:
+        dataModifica = modification_date(percorsoFilesInput + file)
     print("Data modifica file " + file + ": ", dataModifica)
-    pathAnno = pathOut+'\\'+str(dataModifica.year)
+    pathAnno = pathOut + '\\' + str(dataModifica.year)
     if not os.path.exists(pathAnno):
         os.mkdir(pathAnno)
         print("Directory '% s' created" % pathAnno)
@@ -133,8 +143,8 @@ for i in progressbar(range(len(fileTotaliNellaCartella)), redirect_stdout=True):
     else:
         print("Directory ", pathMese, " già esistente")
     try:
-        nomeFileOutput = pathMese + '\\File_' + dataModifica.strftime('%Y%m%d-%H%M%S') #+ estensioneFile
-        pathRisultato = salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensioneFile, 0)
+        nomeFileOutput = pathMese + '\\File_' + dataModifica.strftime('%Y%m%d-%H%M%S')  # + estensioneFile
+        pathRisultato = salvaERinomina(percorsoFilesInput, file, nomeFileOutput, estensioneFile)
         print('File copiato in: ' + pathRisultato)
     except shutil.Error as e:
         print('Shutil Error: %s' % e)
